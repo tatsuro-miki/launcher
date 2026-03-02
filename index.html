@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社内システム ランチャー</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Space+Mono:wght@700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3244;
+    --accent: #4f8ef7;
+    --accent2: #7c5cfc;
+    --text: #e8eaf0;
+    --text-muted: #7a7f96;
+    --success: #3ecf8e;
+    --warning: #f5a623;
+    --danger: #ff6b6b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  /* ヘッダー */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .header-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+  .header-title span {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-left: 12px;
+    letter-spacing: 0;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .btn-add {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-add:hover { opacity: 0.85; }
+  .btn-add:active { transform: scale(0.97); }
+
+  /* 検索 */
+  .search-box {
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px 12px 42px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--text-muted); }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 16px;
+  }
+
+  /* カテゴリタブ */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active, .tab:hover {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  /* カードグリッド */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(79,142,247,0.12);
+  }
+  .card-accent {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .card-icon {
+    font-size: 28px;
+    line-height: 1;
+  }
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .card:hover .card-actions { opacity: 1; }
+  .card-action-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .card-action-btn:hover { color: var(--text); border-color: var(--accent); }
+  .card-action-btn.del:hover { color: var(--danger); border-color: var(--danger); }
+
+  .card-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+    min-height: 40px;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .badge-web { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .badge-local { background: rgba(62,207,142,0.15); color: var(--success); }
+  .badge-tool { background: rgba(245,166,35,0.15); color: var(--warning); }
+
+  .btn-open {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-open:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* モーダル背景 */
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.show { display: flex; }
+
+  /* 詳細モーダル */
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px;
+    width: 90%;
+    max-width: 520px;
+    position: relative;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(20px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-icon { font-size: 48px; margin-bottom: 12px; }
+  .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .modal-badge { margin-bottom: 16px; }
+  .modal-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: 10px;
+  }
+  .modal-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    word-break: break-all;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  /* 追加/編集フォームモーダル */
+  .form-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px;
+    width: 90%;
+    max-width: 480px;
+    position: relative;
+    animation: slideUp 0.2s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .form-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { min-height: 80px; resize: vertical; }
+  .form-select option { background: var(--surface2); }
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .emoji-btn {
+    font-size: 20px;
+    padding: 6px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .emoji-btn:hover, .emoji-btn.selected { border-color: var(--accent); background: rgba(79,142,247,0.1); }
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .btn-cancel {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--accent); }
+  .btn-save {
+    flex: 2;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-save:hover { opacity: 0.85; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--text-muted);
+    grid-column: 1 / -1;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* データ管理 */
+  .data-tip {
+    margin-top: 24px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .data-tip a { color: var(--accent); text-decoration: none; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">LAUNCHER <span id="appCount">0個のアプリ</span></div>
+  </div>
+  <button class="btn-add" onclick="openAddForm()">＋ アプリを追加</button>
+</div>
+
+<div class="search-box">
+  <span class="search-icon">🔍</span>
+  <input type="text" id="searchInput" placeholder="アプリ名や説明で検索..." oninput="renderCards()">
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="grid" id="grid"></div>
+
+<div class="data-tip">
+  💾 データはブラウザに自動保存されます（localStorage）。
+  <span><a onclick="exportData()">エクスポート（JSON）</a> ／ <a onclick="document.getElementById('importFile').click()">インポート</a></span>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+</div>
+
+<!-- 詳細モーダル -->
+<div class="overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="modal" id="detailModal">
+    <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    <div class="modal-icon" id="dIcon"></div>
+    <div class="modal-title" id="dName"></div>
+    <div class="modal-badge" id="dBadge"></div>
+    <div class="modal-desc" id="dDesc"></div>
+    <div class="modal-link" id="dLink"></div>
+    <button class="btn-primary" id="dBtn" onclick="openApp()">🚀 開く</button>
+  </div>
+</div>
+
+<!-- 追加/編集フォームモーダル -->
+<div class="overlay" id="formOverlay" onclick="closeForm(event)">
+  <div class="form-modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeFormModal()">✕</button>
+    <div class="form-title" id="formTitle">アプリを追加</div>
+    
+    <div class="form-group">
+      <label class="form-label">アイコン（絵文字を選択）</label>
+      <div id="selectedEmoji" style="font-size:32px; margin-bottom:8px;">📱</div>
+      <div class="emoji-grid">
+        <button class="emoji-btn" onclick="selectEmoji('💻')">💻</button>
+        <button class="emoji-btn" onclick="selectEmoji('📊')">📊</button>
+        <button class="emoji-btn" onclick="selectEmoji('🗂️')">🗂️</button>
+        <button class="emoji-btn" onclick="selectEmoji('📋')">📋</button>
+        <button class="emoji-btn" onclick="selectEmoji('🔧')">🔧</button>
+        <button class="emoji-btn" onclick="selectEmoji('📱')">📱</button>
+        <button class="emoji-btn" onclick="selectEmoji('🌐')">🌐</button>
+        <button class="emoji-btn" onclick="selectEmoji('📝')">📝</button>
+        <button class="emoji-btn" onclick="selectEmoji('📁')">📁</button>
+        <button class="emoji-btn" onclick="selectEmoji('🔒')">🔒</button>
+        <button class="emoji-btn" onclick="selectEmoji('📧')">📧</button>
+        <button class="emoji-btn" onclick="selectEmoji('📅')">📅</button>
+        <button class="emoji-btn" onclick="selectEmoji('💰')">💰</button>
+        <button class="emoji-btn" onclick="selectEmoji('🏭')">🏭</button>
+        <button class="emoji-btn" onclick="selectEmoji('👥')">👥</button>
+        <button class="emoji-btn" onclick="selectEmoji('⚙️')">⚙️</button>
+        <button class="emoji-btn" onclick="selectEmoji('📈')">📈</button>
+        <button class="emoji-btn" onclick="selectEmoji('🗄️')">🗄️</button>
+        <button class="emoji-btn" onclick="selectEmoji('🖨️')">🖨️</button>
+        <button class="emoji-btn" onclick="selectEmoji('🔑')">🔑</button>
+        <button class="emoji-btn" onclick="selectEmoji('✅')">✅</button>
+        <button class="emoji-btn" onclick="selectEmoji('🚨')">🚨</button>
+        <button class="emoji-btn" onclick="selectEmoji('📦')">📦</button>
+        <button class="emoji-btn" onclick="selectEmoji('🏠')">🏠</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">アプリ・システム名 <span style="color:var(--danger)">*</span></label>
+      <input class="form-input" type="text" id="fName" placeholder="例: 勤怠管理システム">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">説明</label>
+      <textarea class="form-textarea" id="fDesc" placeholder="何をするためのアプリか、使い方のメモなど"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">種別</label>
+      <select class="form-select" id="fType">
+        <option value="web">🌐 Webアプリ（URL）</option>
+        <option value="local">📁 ローカルファイル（パス）</option>
+        <option value="tool">🔧 ツール・その他</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">URL / ファイルパス</label>
+      <input class="form-input" type="text" id="fUrl" placeholder="例: https://xxx.com または C:\tools\app.exe">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">カテゴリ（任意）</label>
+      <input class="form-input" type="text" id="fCat" placeholder="例: 人事 / 会計 / 開発 など">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">アクセントカラー</label>
+      <input type="color" id="fColor" value="#4f8ef7" style="height:36px; width:80px; border:none; border-radius:8px; cursor:pointer;">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeFormModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveApp()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let apps = [];
+  let editingId = null;
+  let selectedEmoji = '📱';
+  let currentDetailApp = null;
+  let activeCategory = 'all';
+
+  const STORAGE_KEY = 'launcher_apps_v1';
+
+  function loadApps() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      apps = JSON.parse(saved);
+    } else {
+      // サンプルデータ
+      apps = [
+        { id: 1, icon: '📊', name: '売上管理ダッシュボード', desc: '月次・週次の売上をグラフで確認できるWebアプリ。毎週月曜に更新。', type: 'web', url: 'https://example.com/sales', category: '営業', color: '#4f8ef7' },
+        { id: 2, icon: '📋', name: '勤怠管理システム', desc: '出退勤の打刻と有休申請ができる。毎月25日締め。', type: 'web', url: 'https://example.com/kintai', category: '人事', color: '#3ecf8e' },
+        { id: 3, icon: '🔧', name: 'サーバー監視ツール', desc: 'サーバーの死活監視と負荷確認ツール。アラートはSlackに通知。', type: 'local', url: 'C:\\tools\\monitor.exe', category: 'インフラ', color: '#f5a623' },
+      ];
+      saveApps();
+    }
+    renderTabs();
+    renderCards();
+  }
+
+  function saveApps() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+  }
+
+  function renderTabs() {
+    const cats = ['all', ...new Set(apps.map(a => a.category).filter(Boolean))];
+    const tabs = document.getElementById('tabs');
+    tabs.innerHTML = cats.map(c => `
+      <button class="tab ${activeCategory === c ? 'active' : ''}" onclick="setCategory('${c}')">
+        ${c === 'all' ? `すべて（${apps.length}）` : c}
+      </button>
+    `).join('');
+  }
+
+  function setCategory(cat) {
+    activeCategory = cat;
+    renderTabs();
+    renderCards();
+  }
+
+  function renderCards() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    let filtered = apps.filter(a => {
+      const matchCat = activeCategory === 'all' || a.category === activeCategory;
+      const matchSearch = !q || a.name.toLowerCase().includes(q) || (a.desc||'').toLowerCase().includes(q);
+      return matchCat && matchSearch;
+    });
+
+    document.getElementById('appCount').textContent = `${apps.length}個のアプリ`;
+
+    const badgeMap = { web: ['badge-web', '🌐 Web'], local: ['badge-local', '📁 ローカル'], tool: ['badge-tool', '🔧 ツール'] };
+
+    const grid = document.getElementById('grid');
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>アプリが見つかりません</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(a => {
+      const [bClass, bLabel] = badgeMap[a.type] || ['badge-tool', '⚙️ その他'];
+      return `
+      <div class="card" onclick="openDetail(${a.id})">
+        <div class="card-accent" style="background: linear-gradient(90deg, ${a.color||'#4f8ef7'}, ${a.color+'aa'||'#4f8ef7aa'})"></div>
+        <div class="card-header">
+          <div class="card-icon">${a.icon}</div>
+          <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="card-action-btn" onclick="openEditForm(${a.id})" title="編集">✏️</button>
+            <button class="card-action-btn del" onclick="deleteApp(${a.id})" title="削除">🗑️</button>
+          </div>
+        </div>
+        <div class="card-name">${a.name}</div>
+        <div class="card-desc">${a.desc || '<span style="opacity:0.4">説明なし</span>'}</div>
+        <div class="card-footer">
+          <span class="badge ${bClass}">${bLabel}</span>
+          <button class="btn-open" onclick="event.stopPropagation(); launchApp(${a.id})">
+            開く →
+          </button>
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  function launchApp(id) {
+    const a = apps.find(x => x.id === id);
+    if (!a || !a.url) return;
+    if (a.type === 'web') window.open(a.url, '_blank');
+    else alert(`ローカルファイルを開く:\n${a.url}\n\n※ ブラウザからローカルファイルを直接開くには、ファイルをブラウザにドラッグ＆ドロップするか、エクスプローラーで開いてください。`);
+  }
+
+  function openDetail(id) {
+    const a = apps.find(x => x.id === id);
+    if (!a) return;
+    currentDetailApp = a;
+    const [bClass, bLabel] = ({web:['badge-web','🌐 Web'],local:['badge-local','📁 ローカル'],tool:['badge-tool','🔧 ツール']})[a.type] || ['badge-tool','⚙️ その他'];
+    document.getElementById('dIcon').textContent = a.icon;
+    document.getElementById('dName').textContent = a.name;
+    document.getElementById('dBadge').innerHTML = `<span class="badge ${bClass}">${bLabel}</span>${a.category ? `<span class="badge" style="margin-left:8px;background:rgba(255,255,255,0.05);color:var(--text-muted)">${a.category}</span>` : ''}`;
+    document.getElementById('dDesc').textContent = a.desc || '説明はありません。';
+    document.getElementById('dLink').innerHTML = `🔗 <span>${a.url || '（リンクなし）'}</span>`;
+    document.getElementById('detailOverlay').classList.add('show');
+  }
+
+  function openApp() {
+    if (currentDetailApp) launchApp(currentDetailApp.id);
+  }
+
+  function closeDetail(e) {
+    if (e.target === document.getElementById('detailOverlay')) closeDetailModal();
+  }
+  function closeDetailModal() {
+    document.getElementById('detailOverlay').classList.remove('show');
+  }
+
+  // フォーム
+  function openAddForm() {
+    editingId = null;
+    selectedEmoji = '📱';
+    document.getElementById('formTitle').textContent = 'アプリを追加';
+    document.getElementById('fName').value = '';
+    document.getElementById('fDesc').value = '';
+    document.getElementById('fType').value = 'web';
+    document.getElementById('fUrl').value = '';
+    document.getElementById('fCat').value = '';
+    document.getElementById('fColor').value = '#4f8ef7';
+    document.getElementById('selectedEmoji').textContent = '📱';
+    document.getElementById('formOverlay').classList.add('show');
+  }
+
+  function openEditForm(id) {
+    const a = apps.find(x => x.id === id);
+    if (!a) return;
+    editingId = id;
+    selectedEmoji = a.icon;
+    document.getElementById('formTitle').textContent = 'アプリを編集';
+    document.getElementById('fName').value = a.name;
+    document.getElementById('fDesc').value = a.desc || '';
+    document.getElementById('fType').value = a.type;
+    document.getElementById('fUrl').value = a.url || '';
+    document.getElementById('fCat').value = a.category || '';
+    document.getElementById('fColor').value = a.color || '#4f8ef7';
+    document.getElementById('selectedEmoji').textContent = a.icon;
+    document.getElementById('formOverlay').classList.add('show');
+  }
+
+  function selectEmoji(e) {
+    selectedEmoji = e;
+    document.getElementById('selectedEmoji').textContent = e;
+    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+    event.target.classList.add('selected');
+  }
+
+  function saveApp() {
+    const name = document.getElementById('fName').value.trim();
+    if (!name) { alert('アプリ名を入力してください'); return; }
+    const data = {
+      icon: selectedEmoji,
+      name,
+      desc: document.getElementById('fDesc').value.trim(),
+      type: document.getElementById('fType').value,
+      url: document.getElementById('fUrl').value.trim(),
+      category: document.getElementById('fCat').value.trim(),
+      color: document.getElementById('fColor').value,
+    };
+    if (editingId) {
+      const idx = apps.findIndex(x => x.id === editingId);
+      apps[idx] = { ...apps[idx], ...data };
+    } else {
+      apps.push({ id: Date.now(), ...data });
+    }
+    saveApps();
+    closeFormModal();
+    renderTabs();
+    renderCards();
+  }
+
+  function deleteApp(id) {
+    const a = apps.find(x => x.id === id);
+    if (!a) return;
+    if (!confirm(`「${a.name}」を削除しますか？`)) return;
+    apps = apps.filter(x => x.id !== id);
+    saveApps();
+    renderTabs();
+    renderCards();
+  }
+
+  function closeForm(e) {
+    if (e.target === document.getElementById('formOverlay')) closeFormModal();
+  }
+  function closeFormModal() {
+    document.getElementById('formOverlay').classList.remove('show');
+  }
+
+  // エクスポート・インポート
+  function exportData() {
+    const blob = new Blob([JSON.stringify(apps, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'launcher_apps.json';
+    a.click();
+  }
+
+  function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) throw new Error();
+        apps = data;
+        saveApps();
+        renderTabs();
+        renderCards();
+        alert(`${apps.length}件のアプリをインポートしました`);
+      } catch {
+        alert('JSONファイルの形式が正しくありません');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  loadApps();
+</script>
+</body>
+</html>
